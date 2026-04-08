@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0ea5e9">
+    <title>Aurelius Finance Analyzer | Personal Finance Dashboard</title>
+    <meta name="description" content="Modern personal finance management dashboard with transaction tracking, analytics, and savings goals.">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' },
+                        accent: { orange: '#f97316', purple: '#8b5cf6', emerald: '#10b981', rose: '#f43f5e' }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
+    
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-50 glass border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="font-display font-bold text-xl gradient-text">Aurelius</span>
+        </div>
+        <button id="mobile-menu-btn" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle menu">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+    </header>
+
+    <div class="flex min-h-screen pt-16 lg:pt-0">
+        <!-- Sidebar -->
+        <aside class="hidden lg:flex fixed left-0 top-0 h-screen w-64 glass border-r border-gray-200 dark:border-gray-800 flex-col z-40">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                        <i data-lucide="trending-up" class="w-7 h-7 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-display font-bold text-xl gradient-text">Aurelius</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Finance Analyzer v2.0</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto p-4 space-y-2">
+                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Main</div>
+                <button onclick="navigateTo('dashboard')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 transition-all-300">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span class="font-medium">Dashboard</span>
+                </button>
+                <button onclick="navigateTo('transactions')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-all-300">
+                    <i data-lucide="credit-card" class="w-5 h-5"></i>
+                    <span class="font-medium">Transactions</span>
+                </button>
+                <button onclick="navigateTo('analytics')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-all-300">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    <span class="font-medium">Analytics</span>
+                </button>
+                <button onclick="navigateTo('goals')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-all-300">
+                    <i data-lucide="target" class="w-5 h-5"></i>
+                    <span class="font-medium">Goals</span>
+                </button>
+                
+                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-3">Tools</div>
+                <button onclick="navigateTo('upload')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-all-300">
+                    <i data-lucide="upload" class="w-5 h-5"></i>
+                    <span class="font-medium">Upload Data</span>
+                </button>
+                <button onclick="navigateTo('settings')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-all-300">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span class="font-medium">Settings</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-gray-200 dark:border-gray-800">
+                <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="User" class="w-10 h-10 rounded-full border-2 border-blue-500">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-sm truncate">Alex Johnson</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">alex@aurelius.com</p>
+                    </div>
+                    <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                        <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 pb-20 lg:pb-0">
+            <div class="hidden lg:flex items-center justify-between p-6 glass border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
+                <div>
+                    <h2 id="page-title" class="text-2xl font-display font-bold">Dashboard</h2>
+                    <p id="page-subtitle" class="text-sm text-gray-500 dark:text-gray-400 mt-1">Welcome back</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="global-search" placeholder="Search transactions..." class="pl-10 pr-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-blue-500 w-64 transition-all-300">
+                    </div>
+                    <button class="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
+                
+                <!-- Dashboard View -->
+                <div id="view-dashboard" class="space-y-6 animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+                        <div class="glass rounded-2xl p-6 hover-lift transition-all-300 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <i data-lucide="arrow-down-left" class="w-6 h-6"></i>
+                                </div>
+                                <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">+12.5%</span>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Income</p>
+                            <h3 class="text-3xl font-display font-bold" id="total-income">$0.00</h3>
+                        </div>
+
+                        <div class="glass rounded-2xl p-6 hover-lift transition-all-300 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                                    <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
+                                </div>
+                                <span class="text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-1 rounded-full">+8.2%</span>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Expenses</p>
+                            <h3 class="text-3xl font-display font-bold" id="total-expenses">$0.00</h3>
+                        </div>
+
+                        <div class="glass rounded-2xl p-6 hover-lift transition-all-300 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                                </div>
+                                <span class="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-1 rounded-full">+24%</span>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Current Balance</p>
+                            <h3 class="text-3xl font-display font-bold" id="total-balance">$0.00</h3>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+                        <div class="lg:col-span-2 glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="font-display font-semibold text-lg">Cash Flow</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Income vs Expenses</p>
+                                </div>
+                                <select id="cashflow-period" onchange="updateCharts()" class="bg-gray-100 dark:bg-gray-800 border-none rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly" selected>Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                            <div style="position: relative; height: 300px; width: 100%;">
+                                <canvas id="cashFlowChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                            <h3 class="font-display font-semibold text-lg mb-4">Spending</h3>
+                            <div style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                            <div class="mt-4 space-y-2" id="category-legend"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+                        <div class="lg:col-span-2 glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="font-display font-semibold text-lg">Recent Transactions</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Latest 5</p>
+                                </div>
+                                <button onclick="navigateTo('transactions')" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">View All</button>
+                            </div>
+                            <div class="space-y-3" id="recent-transactions-list"></div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                                <h3 class="font-display font-semibold text-lg mb-4">Quick Actions</h3>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button onclick="openAddTransactionModal()" class="p-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white flex flex-col items-center gap-2 transition-colors">
+                                        <i data-lucide="plus" class="w-5 h-5"></i>
+                                        <span class="text-sm font-medium">Add</span>
+                                    </button>
+                                    <button onclick="navigateTo('upload')" class="p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex flex-col items-center gap-2 transition-colors">
+                                        <i data-lucide="upload" class="w-5 h-5"></i>
+                                        <span class="text-sm font-medium">Upload</span>
+                                    </button>
+                                    <button onclick="exportData('csv')" class="p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex flex-col items-center gap-2 transition-colors">
+                                        <i data-lucide="download" class="w-5 h-5"></i>
+                                        <span class="text-sm font-medium">Export</span>
+                                    </button>
+                                    <button onclick="navigateTo('goals')" class="p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex flex-col items-center gap-2 transition-colors">
+                                        <i data-lucide="target" class="w-5 h-5"></i>
+                                        <span class="text-sm font-medium">Goals</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                                <h3 class="font-display font-semibold text-lg mb-4">Top Goal</h3>
+                                <div class="mb-2">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="font-medium">$8,500</span>
+                                        <span class="text-gray-500 dark:text-gray-400">$10,000</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">85% achieved</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions View -->
+                <div id="view-transactions" class="hidden space-y-6 animate-fade-in">
+                    <div class="glass rounded-2xl p-4 border border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
+                        <input type="text" id="transaction-search" placeholder="Search..." oninput="filterTransactions()" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border-none text-sm focus:ring-2 focus:ring-blue-500 flex-1 min-w-64">
+                        <select id="filter-category" onchange="filterTransactions()" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border-none text-sm focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Categories</option>
+                            <option value="food">Food</option>
+                            <option value="transport">Transport</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="bills">Bills</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="health">Health</option>
+                            <option value="income">Income</option>
+                        </select>
+                        <button onclick="exportData('csv')" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-sm font-medium flex items-center gap-2">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV
+                        </button>
+                    </div>
+
+                    <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold">Date</th>
+                                        <th class="px-6 py-4 font-semibold">Description</th>
+                                        <th class="px-6 py-4 font-semibold">Category</th>
+                                        <th class="px-6 py-4 font-semibold text-right">Amount</th>
+                                        <th class="px-6 py-4 font-semibold text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactions-table-body" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                            </table>
+                        </div>
+                        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                            <p class="text-sm text-gray-500" id="transaction-count">Showing 0 transactions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics View -->
+                <div id="view-analytics" class="hidden space-y-6 animate-fade-in">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                            <h3 class="font-display font-semibold text-lg mb-4">Daily Trend</h3>
+                            <canvas id="dailyTrendChart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                        <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                            <h3 class="font-display font-semibold text-lg mb-4">Comparison</h3>
+                            <canvas id="comparisonChart" style="position: relative; height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goals View -->
+                <div id="view-goals" class="hidden space-y-6 animate-fade-in">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-display font-bold text-2xl">Savings Goals</h3>
+                        <button onclick="openAddGoalModal()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium flex items-center gap-2">
+                            <i data-lucide="plus" class="w-5 h-5"></i> New Goal
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="goals-grid"></div>
+                </div>
+
+                <!-- Upload View -->
+                <div id="view-upload" class="hidden space-y-6 animate-fade-in">
+                    <div class="glass rounded-2xl p-8 border border-gray-200 dark:border-gray-700 text-center max-w-2xl mx-auto">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 text-blue-600"></i>
+                        </div>
+                        <h3 class="font-display font-bold text-2xl mb-2">Import Transactions</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-6">Upload CSV from your bank</p>
+                        
+                        <div class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-8 mb-6 hover:border-blue-500 cursor-pointer" onclick="document.getElementById('file-input').click()">
+                            <input type="file" id="file-input" accept=".csv,.xlsx" class="hidden" onchange="handleFileUpload(event)">
+                            <i data-lucide="file-plus" class="w-12 h-12 mx-auto mb-4 text-gray-400"></i>
+                            <p class="font-medium mb-1">Click to upload or drag and drop</p>
+                            <p class="text-sm text-gray-500">CSV or Excel files</p>
+                        </div>
+
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                            <p class="mb-3 font-medium">Or add manually:</p>
+                            <button onclick="openAddTransactionModal()" class="px-6 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl w-full">Add Transaction</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="view-settings" class="hidden space-y-6 animate-fade-in">
+                    <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700 max-w-2xl">
+                        <h3 class="font-display font-bold text-xl mb-6">Settings</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium">Dark Mode</p>
+                                    <p class="text-sm text-gray-500">Toggle theme</p>
+                                </div>
+                                <button onclick="toggleTheme()" class="w-14 h-7 bg-blue-600 rounded-full"></button>
+                            </div>
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                <button onclick="exportAsJSON()" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium mb-2">Backup Data</button>
+                                <p class="text-sm text-gray-500">Export all your data as JSON</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-gray-200 dark:border-gray-800 px-4 py-2 z-50 flex justify-around">
+        <button onclick="navigateTo('dashboard')" class="mobile-nav-item flex flex-col items-center gap-1 p-2 text-blue-600">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span class="text-[10px]">Home</span>
+        </button>
+        <button onclick="navigateTo('transactions')" class="mobile-nav-item flex flex-col items-center gap-1 p-2">
+            <i data-lucide="credit-card" class="w-5 h-5"></i>
+            <span class="text-[10px]">Trans</span>
+        </button>
+        <button onclick="openAddTransactionModal()" class="flex flex-col items-center -mt-6">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+            </div>
+        </button>
+        <button onclick="navigateTo('analytics')" class="mobile-nav-item flex flex-col items-center gap-1 p-2">
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            <span class="text-[10px]">Stats</span>
+        </button>
+        <button onclick="navigateTo('settings')" class="mobile-nav-item flex flex-col items-center gap-1 p-2">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+            <span class="text-[10px]">More</span>
+        </button>
+    </nav>
+
+    <!-- Modals -->
+    <div id="add-transaction-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
+            <h3 class="font-display font-bold text-xl mb-6">Add Transaction</h3>
+            <form onsubmit="handleAddTransaction(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <button type="button" onclick="setTransactionType('expense')" id="btn-expense" class="p-3 rounded-xl border-2 border-rose-500 bg-rose-500/10 text-rose-600 font-medium">Expense</button>
+                    <button type="button" onclick="setTransactionType('income')" id="btn-income" class="p-3 rounded-xl border-2 border-transparent bg-gray-100 dark:bg-gray-800 font-medium">Income</button>
+                </div>
+                <input type="hidden" id="transaction-type" value="expense">
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Amount</label>
+                    <input type="number" id="transaction-amount" step="0.01" required class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Description</label>
+                    <input type="text" id="transaction-desc" required class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Category</label>
+                    <select id="transaction-category" class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500">
+                        <option value="food">Food & Dining</option>
+                        <option value="transport">Transport</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="bills">Bills & Utilities</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="health">Health</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Date</label>
+                    <input type="date" id="transaction-date" required class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold">Add</button>
+                    <button type="button" onclick="closeAddTransactionModal()" class="flex-1 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl font-semibold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-goal-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
+            <h3 class="font-display font-bold text-xl mb-6">New Goal</h3>
+            <form onsubmit="handleAddGoal(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Goal Name</label>
+                    <input type="text" id="goal-name" required class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Target Amount</label>
+                    <input type="number" id="goal-target" step="0.01" required class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Target Date</label>
+                    <input type="date" id="goal-date" class="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold">Create</button>
+                    <button type="button" onclick="closeAddGoalModal()" class="flex-1 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl font-semibold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast-notification" class="fixed bottom-24 lg:bottom-6 right-6 glass rounded-lg p-4 border border-gray-200 dark:border-gray-700 max-w-sm hidden z-40">
+        <div class="flex items-center gap-3">
+            <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>
+            <p id="toast-message">Operation successful!</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/validation.js"></script>
+    <script src="js/utils.js"></script>
+</body>
+</html>
